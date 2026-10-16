@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Donasi Mushola Raudhatul Jannah — Grand Taman Semesta Tajurhalang</title>
+  <meta name="description"
+    content="Platform donasi digital Mushola Raudhatul Jannah, Perumahan Grand Taman Semesta, Tajurhalang. Salurkan sedekah & infaq Anda dengan mudah via QRIS atau transfer bank." />
+  <meta name="theme-color" content="#0a3d3d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Mushola RJ" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Mushola Raudhatul Jannah — Grand Taman Semesta" />
+  <meta property="og:description"
+    content="Salurkan sedekah & infaq untuk Mushola Raudhatul Jannah, Tajurhalang. Mudah, transparan, dan berkah." />
+  <meta property="og:type" content="website" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Amiri:wght@400;700&display=swap"
+    rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- Firebase SDK -->
+  <script type="module" src="/js/firebase-config.js"></script>
+
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+
+<body>
+
+  <!-- ===== TOAST NOTIFICATION ===== -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- ===== INSTALL PROMPT ===== -->
+  <div id="install-banner" class="install-banner hidden">
+    <div class="install-banner__content">
+      <span class="install-banner__icon">📱</span>
+      <div>
+        <strong>Install Donasi Mushola RJ</strong>
+        <p>Pasang di HP untuk akses donasi lebih mudah</p>
+      </div>
+    </div>
+    <div class="install-banner__actions">
+      <button id="btn-install" class="btn btn--gold btn--sm">Install</button>
+      <button id="btn-dismiss" class="btn btn--ghost btn--sm">Nanti</button>
+    </div>
+  </div>
+
+  <!-- ===== HEADER ===== -->
+  <header class="header" id="main-header">
+    <div class="container">
+      <div class="header__inner">
+        <a href="#" class="logo" id="nav-home">
+          <span class="logo__icon">☪</span>
+          <span class="logo__text">Sedekah<span class="logo__text--gold">Digital</span></span>
+        </a>
+        <nav class="nav">
+          <a href="#about" class="nav__link">Tentang</a>
+          <a href="#programs" class="nav__link">Program</a>
+          <a href="#donasi" class="nav__link">Donasi</a>
+          <a href="/admin.html" class="nav__link nav__link--admin" id="nav-admin">
+            <span>⚙</span> Admin
+          </a>
+        </nav>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+    <div class="nav-mobile" id="nav-mobile">
+      <a href="#about" class="nav-mobile__link">Tentang</a>
+      <a href="#programs" class="nav-mobile__link">Program</a>
+      <a href="#donasi" class="nav-mobile__link">Donasi Sekarang</a>
+      <a href="/admin.html" class="nav-mobile__link">⚙ Admin Panel</a>
+    </div>
+  </header>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero" id="home">
+    <div class="hero__bg">
+      <div class="hero__orb hero__orb--1"></div>
+      <div class="hero__orb hero__orb--2"></div>
+      <div class="hero__orb hero__orb--3"></div>
+      <div class="hero__mosque"></div>
+    </div>
+    <div class="container">
+      <div class="hero__content">
+        <span class="hero__badge">🤲 Sedekah Terbaik</span>
+        <h1 class="hero__title">
+          Salurkan <span class="text-gold">Kebaikanmu</span><br />
+          Dengan Mudah & Berkah
+        </h1>
+        <p class="hero__subtitle">
+          Platform donasi digital terpercaya. Setiap rupiah Anda tercatat transparan<br class="desktop-br" />
+          dan langsung menyentuh kehidupan yang membutuhkan.
+        </p>
+        <div class="hero__cta">
+          <a href="#donasi" class="btn btn--gold btn--lg pulse-glow">
+            Donasi Sekarang 💛
+          </a>
+          <a href="#about" class="btn btn--outline btn--lg">
+            Pelajari Lebih
+          </a>
+        </div>
+        <div class="hero__stats">
+          <div class="hero__stat">
+            <span class="hero__stat-value" id="stat-total">Rp 0</span>
+            <span class="hero__stat-label">Terkumpul</span>
+          </div>
+          <div class="hero__stat-divider"></div>
+          <div class="hero__stat">
+            <span class="hero__stat-value" id="stat-count">0</span>
+            <span class="hero__stat-label">Donatur</span>
+          </div>
+          <div class="hero__stat-divider"></div>
+          <div class="hero__stat">
+            <span class="hero__stat-value" id="stat-today">Rp 0</span>
+            <span class="hero__stat-label">Hari Ini</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-indicator">
+      <div class="scroll-indicator__dot"></div>
+    </div>
+  </section>
+
+  <!-- ===== ABOUT ===== -->
+  <section class="about section" id="about">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">✨ Mengapa Kami</span>
+        <h2 class="section-title">Transparan, Aman, <span class="text-gold">Berkah</span></h2>
+        <p class="section-subtitle">Kami memastikan setiap donasi Anda tersalurkan dengan tepat sasaran dan tercatat
+          secara real-time.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-card__icon">🔒</div>
+          <h3>Aman & Terpercaya</h3>
+          <p>Sistem keamanan berlapis dengan enkripsi data. Setiap transaksi tercatat dan dapat diverifikasi.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon">📊</div>
+          <h3>Transparan 100%</h3>
+          <p>Laporan donasi real-time. Anda bisa melihat perkembangan program yang Anda dukung.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon">⚡</div>
+          <h3>Instan & Mudah</h3>
+          <p>Donasi dalam hitungan detik via QRIS atau transfer bank. Konfirmasi otomatis langsung diterima.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-card__icon">📱</div>
+          <h3>Bisa Diinstall</h3>
+          <p>Tersedia sebagai aplikasi PWA. Install di HP Anda dan donasi kapanpun, dimanapun.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PROGRAMS ===== -->
+  <section class="programs section" id="programs">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">🌟 Program Kami</span>
+        <h2 class="section-title">Pilih <span class="text-gold">Program</span> Donasi</h2>
+        <p class="section-subtitle">Setiap program dirancang untuk memberikan dampak nyata bagi yang membutuhkan.</p>
+      </div>
+      <div class="programs-grid" id="programs-grid">
+        <!-- Diisi oleh JS -->
+        <div class="program-card loading-card">
+          <div class="skeleton skeleton--img"></div>
+          <div class="skeleton skeleton--text"></div>
+          <div class="skeleton skeleton--text skeleton--short"></div>
+        </div>
+        <div class="program-card loading-card">
+          <div class="skeleton skeleton--img"></div>
+          <div class="skeleton skeleton--text"></div>
+          <div class="skeleton skeleton--text skeleton--short"></div>
+        </div>
+        <div class="program-card loading-card">
+          <div class="skeleton skeleton--img"></div>
+          <div class="skeleton skeleton--text"></div>
+          <div class="skeleton skeleton--text skeleton--short"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== DONATION SECTION ===== -->
+  <section class="donation-section section" id="donasi">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">💛 Donasi Sekarang</span>
+        <h2 class="section-title">Mulai <span class="text-gold">Berdonasi</span></h2>
+        <p class="section-subtitle">Pilih nominal dan metode pembayaran yang Anda inginkan.</p>
+      </div>
+
+      <div class="donation-wrapper">
+        <!-- Step 1: Form Donasi -->
+        <div class="donation-step active" id="step-1">
+          <div class="donation-card glass-card">
+            <h3 class="donation-card__title">📝 Isi Data Donasi</h3>
+
+            <div class="form-group">
+              <label class="form-label">Nama Donatur</label>
+              <input type="text" id="donor-name" class="form-input" placeholder="Nama lengkap / Anonim" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Program Donasi</label>
+              <select id="program-select" class="form-input form-select">
+                <option value="umum">Donasi Umum</option>
+                <option value="yatim">Beasiswa Anak Yatim</option>
+                <option value="masjid">Pembangunan Masjid</option>
+                <option value="pangan">Bantuan Pangan</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Nominal Donasi</label>
+              <div class="amount-grid">
+                <button class="amount-btn" data-amount="10000">Rp 10K</button>
+                <button class="amount-btn" data-amount="25000">Rp 25K</button>
+                <button class="amount-btn" data-amount="50000">Rp 50K</button>
+                <button class="amount-btn" data-amount="100000">Rp 100K</button>
+                <button class="amount-btn" data-amount="250000">Rp 250K</button>
+                <button class="amount-btn" data-amount="500000">Rp 500K</button>
+              </div>
+              <div class="custom-amount-wrap">
+                <span class="currency-prefix">Rp</span>
+                <input type="number" id="custom-amount" class="form-input form-input--custom"
+                  placeholder="Nominal lainnya..." min="1000" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Metode Pembayaran</label>
+              <div class="payment-methods">
+                <button class="payment-method active" id="pm-qris" data-method="qris">
+                  <span class="payment-method__icon">📷</span>
+                  <span class="payment-method__name">QRIS</span>
+                  <span class="payment-method__desc">Semua e-wallet & bank</span>
+                </button>
+                <button class="payment-method" id="pm-transfer" data-method="transfer">
+                  <span class="payment-method__icon">🏦</span>
+                  <span class="payment-method__name">Transfer Bank</span>
+                  <span class="payment-method__desc">BCA / BNI / Mandiri</span>
+                </button>
+                <button class="payment-method" id="pm-gopay" data-method="gopay">
+                  <span class="payment-method__icon">💚</span>
+                  <span class="payment-method__name">GoPay</span>
+                  <span class="payment-method__desc">Scan QR GoPay</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Pesan / Doa (opsional)</label>
+              <textarea id="donor-message" class="form-input form-textarea" rows="3"
+                placeholder="Titipkan doa atau pesan Anda..."></textarea>
+            </div>
+
+            <button class="btn btn--gold btn--full btn--lg" id="btn-next-step">
+              Lanjut Bayar →
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Pembayaran -->
+        <div class="donation-step" id="step-2">
+          <div class="donation-card glass-card">
+            <button class="btn-back" id="btn-back">← Kembali</button>
+            <h3 class="donation-card__title">💳 Instruksi Pembayaran</h3>
+
+            <div class="payment-summary">
+              <div class="payment-summary__row">
+                <span>Program</span>
+                <strong id="summary-program">—</strong>
+              </div>
+              <div class="payment-summary__row">
+                <span>Nominal</span>
+                <strong id="summary-amount" class="text-gold">—</strong>
+              </div>
+              <div class="payment-summary__row">
+                <span>Metode</span>
+                <strong id="summary-method">—</strong>
+              </div>
+              <div class="payment-summary__row">
+                <span>Kode Unik</span>
+                <strong id="summary-code" class="text-gold">—</strong>
+              </div>
+            </div>
+
+            <!-- QRIS Panel -->
+            <div class="payment-panel" id="panel-qris">
+              <p class="payment-panel__instruction">Scan QR di bawah dengan aplikasi e-wallet atau m-banking Anda</p>
+              <div class="qr-wrapper">
+                <div id="qr-code-container"></div>
+                <div class="qr-badge">QRIS</div>
+              </div>
+              <p class="payment-note">⚠️ QR ini berlaku untuk semua aplikasi yang mendukung QRIS</p>
+            </div>
+
+            <!-- Transfer Bank Panel -->
+            <div class="payment-panel hidden" id="panel-transfer">
+              <p class="payment-panel__instruction">Transfer ke rekening berikut:</p>
+              <div class="bank-accounts">
+                <div class="bank-account">
+                  <div class="bank-account__logo">BCA</div>
+                  <div class="bank-account__info">
+                    <span class="bank-account__number" id="bca-number">1234-567-890</span>
+                    <span class="bank-account__name">a/n Mushola Raudhatull Jannah GTSM</span>
+                  </div>
+                  <button class="btn-copy" data-copy="1234567890" title="Salin nomor rekening">📋</button>
+                </div>
+                <div class="bank-account">
+                  <div class="bank-account__logo">BNI</div>
+                  <div class="bank-account__info">
+                    <span class="bank-account__number" id="bni-number">0987-654-321</span>
+                    <span class="bank-account__name">a/n Mushola Raudhatull Jannah GTSM</span>
+                  </div>
+                  <button class="btn-copy" data-copy="0987654321" title="Salin nomor rekening">📋</button>
+                </div>
+                <div class="bank-account">
+                  <div class="bank-account__logo">Mandiri</div>
+                  <div class="bank-account__info">
+                    <span class="bank-account__number" id="mandiri-number">1122-334-455</span>
+                    <span class="bank-account__name">a/n Mushola Raudhatull Jannah GTSM</span>
+                  </div>
+                  <button class="btn-copy" data-copy="1122334455" title="Salin nomor rekening">📋</button>
+                </div>
+              </div>
+              <div class="transfer-note">
+                <p>📌 Tambahkan <strong id="unique-code-transfer" class="text-gold"></strong> di akhir nominal transfer
+                </p>
+                <p>Contoh: Transfer <strong id="transfer-total" class="text-gold"></strong></p>
+              </div>
+            </div>
+
+            <!-- GoPay Panel -->
+            <div class="payment-panel hidden" id="panel-gopay">
+              <p class="payment-panel__instruction">Scan QR di bawah dengan aplikasi Gojek Anda</p>
+              <div class="qr-wrapper">
+                <div id="qr-gopay-container"></div>
+                <div class="qr-badge gopay">GoPay</div>
+              </div>
+              <p class="payment-note">⚠️ Khusus untuk pengguna aplikasi Gojek</p>
+            </div>
+
+            <div class="confirm-section">
+              <p class="confirm-section__text">Setelah transfer, klik tombol di bawah untuk konfirmasi:</p>
+              <button class="btn btn--gold btn--full btn--lg" id="btn-confirm-payment">
+                ✅ Saya Sudah Bayar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Sukses -->
+        <div class="donation-step" id="step-3">
+          <div class="donation-card glass-card success-card">
+            <div class="success-animation">
+              <div class="success-circle">
+                <div class="success-checkmark">✓</div>
+              </div>
+            </div>
+            <h3 class="success-title">JazakAllahu Khairan!</h3>
+            <p class="success-subtitle">Donasi Anda telah kami terima dan sedang diverifikasi.</p>
+            <div class="success-detail" id="success-detail">
+              <!-- Diisi JS -->
+            </div>
+            <p class="success-note">📧 Tim kami akan memverifikasi pembayaran Anda dalam waktu singkat.</p>
+            <button class="btn btn--gold btn--full" id="btn-donate-again">
+              Donasi Lagi 💛
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== RECENT DONATIONS ===== -->
+  <section class="recent-donations section" id="recent">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">📜 Aktivitas Terbaru</span>
+        <h2 class="section-title">Donatur <span class="text-gold">Terbaru</span></h2>
+      </div>
+      <div class="donations-feed" id="donations-feed">
+        <!-- Diisi oleh Firebase realtime -->
+        <div class="feed-empty">Memuat data donasi...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__inner">
+        <div class="footer__brand">
+          <a href="#" class="logo">
+            <span class="logo__icon">☪</span>
+            <span class="logo__text">Sedekah<span class="logo__text--gold">Digital</span></span>
+          </a>
+          <p>Platform donasi digital terpercaya untuk menyalurkan sedekah Anda dengan mudah dan transparan.</p>
+        </div>
+        <div class="footer__links">
+          <h4>Navigasi</h4>
+          <a href="#about">Tentang Kami</a>
+          <a href="#programs">Program</a>
+          <a href="#donasi">Donasi</a>
+        </div>
+        <div class="footer__contact">
+          <h4>Kontak</h4>
+          <p>📧 info@sedekah.digital</p>
+          <p>📱 0812-3456-7890</p>
+          <p>📍 Jakarta, Indonesia</p>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <p>© 2026 Sedekah Digital. Dibuat dengan ❤️ untuk kebaikan umat.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Main JS -->
+  <script type="module" src="/js/app.js"></script>
+  <script>
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('SW registered:', reg.scope))
+          .catch(err => console.log('SW error:', err));
+      });
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel — Sedekah Digital</title>
+  <meta name="description" content="Panel administrasi Sedekah Digital" />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body class="admin-body">
+
+  <!-- ===== TOAST ===== -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- ===== LOGIN OVERLAY ===== -->
+  <div class="login-overlay" id="login-overlay">
+    <div class="login-card glass-card">
+      <div class="login-card__header">
+        <span class="login-icon">🔐</span>
+        <h1 class="login-title">Admin Panel</h1>
+        <p class="login-subtitle">Sedekah Digital</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label">PIN Admin</label>
+        <div class="pin-input-wrap">
+          <input type="password" id="admin-pin" class="form-input pin-input" placeholder="Masukkan PIN" maxlength="6" autocomplete="current-password" />
+          <button class="pin-toggle" id="pin-toggle" type="button">👁</button>
+        </div>
+        <p class="pin-hint">Default: 123456</p>
+      </div>
+      <button class="btn btn--gold btn--full" id="btn-login">
+        Masuk ke Dashboard
+      </button>
+      <div id="login-error" class="login-error hidden">
+        ❌ PIN salah. Silakan coba lagi.
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ADMIN APP ===== -->
+  <div class="admin-app hidden" id="admin-app">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar__header">
+        <span class="logo__icon">☪</span>
+        <div>
+          <span class="sidebar__title">Sedekah Digital</span>
+          <span class="sidebar__role">Administrator</span>
+        </div>
+      </div>
+      <nav class="sidebar__nav">
+        <a href="#" class="sidebar__link active" data-page="dashboard">
+          <span class="sidebar__link-icon">📊</span> Dashboard
+        </a>
+        <a href="#" class="sidebar__link" data-page="donations">
+          <span class="sidebar__link-icon">💛</span> Donasi
+        </a>
+        <a href="#" class="sidebar__link" data-page="programs">
+          <span class="sidebar__link-icon">🌟</span> Program
+        </a>
+        <a href="#" class="sidebar__link" data-page="settings">
+          <span class="sidebar__link-icon">⚙</span> Pengaturan
+        </a>
+      </nav>
+      <div class="sidebar__footer">
+        <button class="btn btn--ghost btn--sm" id="btn-logout">
+          🚪 Keluar
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+
+      <!-- Topbar -->
+      <div class="topbar">
+        <button class="sidebar-toggle" id="sidebar-toggle">☰</button>
+        <div class="topbar__title" id="page-title">Dashboard</div>
+        <div class="topbar__actions">
+          <div class="live-indicator">
+            <span class="live-dot"></span>
+            <span>Live</span>
+          </div>
+          <button class="btn btn--gold btn--sm" id="btn-export">📥 Export</button>
+        </div>
+      </div>
+
+      <!-- ===== PAGE: DASHBOARD ===== -->
+      <div class="page active" id="page-dashboard">
+
+        <!-- Stat Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card__icon stat-card__icon--gold">💰</div>
+            <div class="stat-card__body">
+              <span class="stat-card__label">Total Donasi</span>
+              <span class="stat-card__value" id="stat-total-admin">Rp 0</span>
+              <span class="stat-card__change positive" id="stat-total-change">↑ +0%</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__icon stat-card__icon--blue">👥</div>
+            <div class="stat-card__body">
+              <span class="stat-card__label">Total Donatur</span>
+              <span class="stat-card__value" id="stat-donors-admin">0</span>
+              <span class="stat-card__change positive" id="stat-donors-change">↑ +0%</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__icon stat-card__icon--green">📅</div>
+            <div class="stat-card__body">
+              <span class="stat-card__label">Donasi Hari Ini</span>
+              <span class="stat-card__value" id="stat-today-admin">Rp 0</span>
+              <span class="stat-card__change" id="stat-today-change">— Rp 0</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__icon stat-card__icon--purple">⏳</div>
+            <div class="stat-card__body">
+              <span class="stat-card__label">Menunggu Verifikasi</span>
+              <span class="stat-card__value" id="stat-pending-admin">0</span>
+              <span class="stat-card__change neutral">transaksi</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+          <div class="chart-card glass-card">
+            <div class="chart-card__header">
+              <h3>Donasi 7 Hari Terakhir</h3>
+              <div class="chart-legend">
+                <span class="legend-dot legend-dot--gold"></span> Nominal
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-weekly"></canvas>
+            </div>
+          </div>
+          <div class="chart-card glass-card">
+            <div class="chart-card__header">
+              <h3>Metode Pembayaran</h3>
+            </div>
+            <div class="chart-container chart-container--doughnut">
+              <canvas id="chart-methods"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="glass-card table-card">
+          <div class="table-card__header">
+            <h3>Transaksi Terbaru</h3>
+            <a href="#" class="link-gold" data-page-link="donations">Lihat semua →</a>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" id="table-recent">
+              <thead>
+                <tr>
+                  <th>Waktu</th>
+                  <th>Nama</th>
+                  <th>Program</th>
+                  <th>Nominal</th>
+                  <th>Metode</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-recent">
+                <tr><td colspan="6" class="table-loading">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PAGE: DONATIONS ===== -->
+      <div class="page" id="page-donations">
+        <div class="glass-card table-card">
+          <div class="table-card__header">
+            <h3>Semua Donasi</h3>
+            <div class="table-filters">
+              <input type="text" id="filter-search" class="form-input form-input--sm" placeholder="🔍 Cari donatur..." />
+              <select id="filter-status" class="form-input form-input--sm form-select">
+                <option value="">Semua Status</option>
+                <option value="pending">Pending</option>
+                <option value="verified">Terverifikasi</option>
+                <option value="rejected">Ditolak</option>
+              </select>
+              <select id="filter-method" class="form-input form-input--sm form-select">
+                <option value="">Semua Metode</option>
+                <option value="qris">QRIS</option>
+                <option value="transfer">Transfer</option>
+                <option value="gopay">GoPay</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" id="table-all">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Waktu</th>
+                  <th>Nama</th>
+                  <th>Program</th>
+                  <th>Nominal</th>
+                  <th>Kode Unik</th>
+                  <th>Metode</th>
+                  <th>Pesan</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-all">
+                <tr><td colspan="10" class="table-loading">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-pagination" id="pagination">
+            <!-- Diisi JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PAGE: PROGRAMS ===== -->
+      <div class="page" id="page-programs">
+        <div class="glass-card table-card">
+          <div class="table-card__header">
+            <h3>Manajemen Program</h3>
+            <button class="btn btn--gold btn--sm" id="btn-add-program">+ Tambah Program</button>
+          </div>
+          <div class="programs-admin-grid" id="programs-admin-grid">
+            <!-- Diisi JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PAGE: SETTINGS ===== -->
+      <div class="page" id="page-settings">
+        <div class="settings-grid">
+          <div class="glass-card settings-card">
+            <h3>⚙ Pengaturan Umum</h3>
+            <div class="form-group">
+              <label class="form-label">Nama Organisasi</label>
+              <input type="text" id="org-name" class="form-input" value="Yayasan Sedekah Digital" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Target Donasi Bulan Ini</label>
+              <input type="number" id="monthly-target" class="form-input" value="10000000" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Google Sheets ID</label>
+              <input type="text" id="sheets-id" class="form-input" placeholder="ID spreadsheet Google Sheets..." />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Apps Script URL (Webhook)</label>
+              <input type="text" id="apps-script-url" class="form-input" placeholder="https://script.google.com/macros/s/..." />
+            </div>
+            <button class="btn btn--gold" id="btn-save-settings">Simpan Pengaturan</button>
+          </div>
+
+          <div class="glass-card settings-card">
+            <h3>🏦 Rekening Bank</h3>
+            <div class="form-group">
+              <label class="form-label">Nomor BCA</label>
+              <input type="text" id="bca-acc" class="form-input" value="1234567890" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nomor BNI</label>
+              <input type="text" id="bni-acc" class="form-input" value="0987654321" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nomor Mandiri</label>
+              <input type="text" id="mandiri-acc" class="form-input" value="1122334455" />
+            </div>
+            <button class="btn btn--gold" id="btn-save-bank">Simpan Rekening</button>
+          </div>
+
+          <div class="glass-card settings-card">
+            <h3>🔐 Keamanan</h3>
+            <div class="form-group">
+              <label class="form-label">PIN Saat Ini</label>
+              <input type="password" id="current-pin" class="form-input" placeholder="••••••" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">PIN Baru</label>
+              <input type="password" id="new-pin" class="form-input" placeholder="••••••" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Konfirmasi PIN Baru</label>
+              <input type="password" id="confirm-pin" class="form-input" placeholder="••••••" />
+            </div>
+            <button class="btn btn--gold" id="btn-change-pin">Ganti PIN</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ===== MODAL VERIFY ===== -->
+  <div class="modal-overlay hidden" id="modal-verify">
+    <div class="modal glass-card">
+      <button class="modal-close" id="modal-close">✕</button>
+      <h3 class="modal-title">Verifikasi Donasi</h3>
+      <div id="modal-detail" class="modal-detail">
+        <!-- Diisi JS -->
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--green" id="btn-verify-ok">✅ Verifikasi</button>
+        <button class="btn btn--red" id="btn-verify-reject">❌ Tolak</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/admin.js"></script>
+</body>
+</html>
