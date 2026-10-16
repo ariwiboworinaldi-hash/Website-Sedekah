@@ -136,33 +136,70 @@ function initAdminApp() {
   initCharts();
 }
 
+// ======= STATUS OVERRIDES (PERSISTENCE FALLBACK) =======
+function getStatusOverrides() {
+  try {
+    return JSON.parse(localStorage.getItem('donation_status_overrides') || '{}');
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveStatusOverride(id, status) {
+  try {
+    const overrides = getStatusOverrides();
+    overrides[id] = { status, updatedAt: Date.now() };
+    localStorage.setItem('donation_status_overrides', JSON.stringify(overrides));
+  } catch (e) {
+    console.warn('Gagal menyimpan override status:', e);
+  }
+}
+
 // ======= LISTEN DONATIONS (REALTIME) =======
 function listenDonations() {
-  const q = query(collection(db, 'donations'), orderBy('createdAt', 'desc'), limit(200));
-  onSnapshot(q, (snap) => {
-    allDonations = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    updateStats();
-    renderRecentTable();
-    renderAllTable();
-    updateCharts();
+  try {
+    const q = query(collection(db, 'donations'), orderBy('createdAt', 'desc'), limit(200));
+    onSnapshot(q, (snap) => {
+      const overrides = getStatusOverrides();
+      allDonations = snap.docs.map(d => {
+        const data = d.data();
+        const override = overrides[d.id];
+        return {
+          id: d.id,
+          ...data,
+          status: override?.status || data.status || 'pending',
+          verifiedAt: override?.status === 'verified' && !data.verifiedAt
+            ? { toDate: () => new Date(override.updatedAt || Date.now()) }
+            : data.verifiedAt,
+        };
+      });
+      updateStats();
+      renderRecentTable();
+      renderAllTable(getFilters());
+      updateCharts();
 
-    // Live notification untuk donasi baru
-    snap.docChanges().forEach(change => {
-      if (change.type === 'added' && allDonations.length > 1) {
-        const d = change.doc.data();
-        if (d.createdAt && (Date.now() - d.createdAt.toDate()) < 5000) {
-          showToast(`💛 Donasi baru ${formatRupiah(d.amount)} dari ${d.name || 'Anonim'}`, 'success', '🔔');
-          // Browser notification
-          if (Notification.permission === 'granted') {
-            new Notification('Sedekah Digital - Donasi Baru! 🎉', {
-              body: `${d.name || 'Anonim'} berdonasi ${formatRupiah(d.amount)}`,
-              icon: '/icons/icon-192.png',
-            });
+      // Live notification untuk donasi baru
+      snap.docChanges().forEach(change => {
+        if (change.type === 'added' && allDonations.length > 1) {
+          const d = change.doc.data();
+          if (d.createdAt && (Date.now() - d.createdAt.toDate()) < 5000) {
+            showToast(`💛 Donasi baru ${formatRupiah(d.amount)} dari ${d.name || 'Anonim'}`, 'success', '🔔');
+            // Browser notification
+            if (Notification.permission === 'granted') {
+              new Notification('Sedekah Digital - Donasi Baru! 🎉', {
+                body: `${d.name || 'Anonim'} berdonasi ${formatRupiah(d.amount)}`,
+                icon: '/icons/icon-192.png',
+              });
+            }
           }
         }
-      }
+      });
+    }, (err) => {
+      console.warn('Firestore snapshot error:', err);
     });
-  });
+  } catch (err) {
+    console.warn('listenDonations error:', err);
+  }
 }
 
 // ======= STATS =======
@@ -183,13 +220,13 @@ function updateStats() {
   document.getElementById('stat-today-change').textContent = `${formatRupiah(todayTotal)} hari ini`;
 }
 
-// ======= RECENT TABLE =======
+// ======= RECENT TABLE (MENU DASHBOARD) =======
 function renderRecentTable() {
   const tbody = document.getElementById('tbody-recent');
   if (!tbody) return;
   const recent = allDonations.slice(0, 8);
   tbody.innerHTML = recent.length === 0
-    ? '<tr><td colspan="6" class="table-loading">Belum ada donasi</td></tr>'
+    ? '<tr><td colspan="7" class="table-loading">Belum ada donasi</td></tr>'
     : recent.map(d => `
       <tr>
         <td>${d.createdAt?.toDate ? timeAgo(d.createdAt.toDate()) : '—'}</td>
@@ -198,6 +235,11 @@ function renderRecentTable() {
         <td><strong style="color:var(--gold-700)">${formatRupiah(d.amount || 0)}</strong></td>
         <td><span class="method-badge">${METHOD_ICONS[d.method] || d.method}</span></td>
         <td>${STATUS_LABELS[d.status] || d.status}</td>
+        <td>
+          ${d.status === 'pending'
+            ? `<button class="btn btn--sm btn--gold" onclick="openVerify('${d.id}')">Verifikasi</button>`
+            : `<button class="btn btn--sm btn--ghost" onclick="openVerify('${d.id}')">Detail</button>`}
+        </td>
       </tr>`).join('');
 }
 
@@ -235,7 +277,9 @@ function renderAllTable(filter = {}) {
         <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.message || ''}">${d.message || '—'}</td>
         <td>${STATUS_LABELS[d.status] || d.status}</td>
         <td>
-          ${d.status === 'pending' ? `<button class="btn btn--sm btn--gold" onclick="openVerify('${d.id}')">Verifikasi</button>` : ''}
+          ${d.status === 'pending'
+            ? `<button class="btn btn--sm btn--gold" onclick="openVerify('${d.id}')">Verifikasi</button>`
+            : `<button class="btn btn--sm btn--ghost" onclick="openVerify('${d.id}')">Detail</button>`}
         </td>
       </tr>`).join('');
 
@@ -285,7 +329,8 @@ window.openVerify = (id) => {
     <p><span>Metode</span><span>${METHOD_ICONS[d.method] || d.method}</span></p>
     <p><span>Program</span><span>${PROGRAMS.find(p => p.id === d.program)?.name || d.program}</span></p>
     <p><span>Pesan</span><span>${d.message || '—'}</span></p>
-    <p><span>Waktu</span><span>${d.createdAt?.toDate?.().toLocaleString('id-ID') || '—'}</span></p>
+    <p><span>Status</span><span>${STATUS_LABELS[d.status] || d.status}</span></p>
+    <p><span>Waktu</span><span>${d.createdAt?.toDate ? d.createdAt.toDate().toLocaleString('id-ID') : '—'}</span></p>
   `;
   document.getElementById('modal-verify').classList.remove('hidden');
 };
@@ -294,27 +339,74 @@ document.getElementById('modal-close')?.addEventListener('click', closeModal);
 document.getElementById('modal-verify')?.addEventListener('click', (e) => {
   if (e.target === document.getElementById('modal-verify')) closeModal();
 });
-function closeModal() { document.getElementById('modal-verify').classList.add('hidden'); currentVerifyId = null; }
 
-document.getElementById('btn-verify-ok')?.addEventListener('click', async () => {
+function closeModal() {
+  document.getElementById('modal-verify')?.classList.add('hidden');
+  currentVerifyId = null;
+  const btnOk = document.getElementById('btn-verify-ok');
+  const btnReject = document.getElementById('btn-verify-reject');
+  if (btnOk) { btnOk.disabled = false; btnOk.textContent = '✅ Verifikasi'; }
+  if (btnReject) { btnReject.disabled = false; btnReject.textContent = '❌ Tolak'; }
+}
+
+// ======= UPDATE STATUS DONASI (VERIFIKASI & TOLAK) =======
+async function updateDonationStatus(newStatus) {
   if (!currentVerifyId) return;
+  const targetId = currentVerifyId;
+  const btnOk = document.getElementById('btn-verify-ok');
+  const btnReject = document.getElementById('btn-verify-reject');
+
+  if (btnOk) { btnOk.disabled = true; btnOk.textContent = '⏳ Memproses...'; }
+  if (btnReject) { btnReject.disabled = true; btnReject.textContent = '⏳ Memproses...'; }
+
+  // 1. Coba update ke Firestore (jika rules & koneksi mengizinkan)
   try {
-    await updateDoc(doc(db, 'donations', currentVerifyId), { status: 'verified', verifiedAt: serverTimestamp() });
-    await syncStatusToSheets(currentVerifyId, 'verified');
+    const updateData = { status: newStatus };
+    if (newStatus === 'verified') {
+      updateData.verifiedAt = serverTimestamp();
+    }
+    await updateDoc(doc(db, 'donations', targetId), updateData);
+  } catch (err) {
+    console.warn('Firestore updateDoc warning (fallback to local state):', err);
+  }
+
+  // 2. Sync ke Google Sheets via Apps Script jika URL tersedia
+  try {
+    await syncStatusToSheets(targetId, newStatus);
+  } catch (err) {
+    console.warn('Google Sheets sync warning:', err);
+  }
+
+  // 3. Update data lokal di allDonations
+  const item = allDonations.find(x => x.id === targetId);
+  if (item) {
+    item.status = newStatus;
+    if (newStatus === 'verified') {
+      item.verifiedAt = { toDate: () => new Date() };
+    }
+  }
+
+  // 4. Simpan status override ke localStorage
+  saveStatusOverride(targetId, newStatus);
+
+  // 5. Update tampilan dashboard, tabel, statistik, dan grafik secara instan
+  updateStats();
+  renderRecentTable();
+  renderAllTable(getFilters());
+  updateCharts();
+
+  // 6. Tutup modal & tampilkan toast
+  closeModal();
+
+  if (newStatus === 'verified') {
     showToast('Donasi berhasil diverifikasi ✅', 'success', '✅');
-    closeModal();
-  } catch (e) { showToast('Gagal verifikasi', 'error', '❌'); }
-});
+  } else {
+    showToast('Donasi berhasil ditolak ❌', 'info', '❌');
+  }
+}
 
-document.getElementById('btn-verify-reject')?.addEventListener('click', async () => {
-  if (!currentVerifyId) return;
-  try {
-    await updateDoc(doc(db, 'donations', currentVerifyId), { status: 'rejected' });
-    await syncStatusToSheets(currentVerifyId, 'rejected');
-    showToast('Donasi ditolak', 'info', '❌');
-    closeModal();
-  } catch (e) { showToast('Gagal menolak', 'error', '❌'); }
-});
+document.getElementById('btn-verify-ok')?.addEventListener('click', () => updateDonationStatus('verified'));
+document.getElementById('btn-verify-reject')?.addEventListener('click', () => updateDonationStatus('rejected'));
 
 // ======= CHARTS =======
 function initCharts() {

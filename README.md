@@ -42,7 +42,8 @@ Platform donasi digital berbasis PWA, Firebase Firestore, Google Sheets, dan dep
      match /databases/{database}/documents {
        match /donations/{docId} {
          allow read, create: if true;
-         allow update, delete: if false; // Admin update via Admin SDK
+         allow update: if true; // Diperlukan agar Admin Panel bisa verifikasi & tolak donasi
+         allow delete: if false;
        }
      }
    }
@@ -95,12 +96,7 @@ const Settings = {
 # Install Vercel CLI
 npm install -g vercel
 
-# Deploy dari folder sedekah-app
-cd sedekah-app
-vercel
-
-# Atau connect ke GitHub di vercel.com untuk auto-deploy
-```
+dir
 
 ---
 

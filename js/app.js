@@ -362,28 +362,32 @@ function animateNumber(id, target, isRupiah) {
 }
 
 // ======= RECENT DONATIONS FEED =======
+function getStatusOverrides() {
+  try { return JSON.parse(localStorage.getItem('donation_status_overrides') || '{}'); } catch (e) { return {}; }
+}
+
 function listenRecentDonations() {
   const feed = document.getElementById('donations-feed');
   if (!feed) return;
-  const q = query(collection(db, 'donations'), orderBy('createdAt', 'desc'), limit(10));
-  let first = true;
-  onSnapshot(q, (snap) => {
-    if (first) {
+  try {
+    const q = query(collection(db, 'donations'), orderBy('createdAt', 'desc'), limit(10));
+    onSnapshot(q, (snap) => {
+      const overrides = getStatusOverrides();
       feed.innerHTML = '';
-      first = false;
-    }
-    snap.docChanges().forEach(change => {
-      if (change.type === 'added') {
-        const d = change.doc.data();
-        const item = createFeedItem(d, true);
-        feed.prepend(item);
-        if (feed.children.length > 10) feed.lastChild.remove();
+      if (snap.empty) {
+        feed.innerHTML = '<div class="feed-empty">Belum ada donasi. Jadilah yang pertama! 🌟</div>';
+        return;
       }
-    });
-    if (feed.children.length === 0) {
-      feed.innerHTML = '<div class="feed-empty">Belum ada donasi. Jadilah yang pertama! 🌟</div>';
-    }
-  });
+      snap.docs.forEach(docSnap => {
+        const d = docSnap.data();
+        const effectiveStatus = overrides[docSnap.id]?.status || d.status;
+        const item = createFeedItem({ ...d, status: effectiveStatus });
+        feed.appendChild(item);
+      });
+    }, (err) => console.warn('listenRecentDonations error:', err));
+  } catch (err) {
+    console.warn('listenRecentDonations error:', err);
+  }
 }
 
 function createFeedItem(data, isNew = false) {

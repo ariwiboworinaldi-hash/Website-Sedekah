@@ -2,7 +2,7 @@
 // SERVICE WORKER — Sedekah Digital PWA
 // ================================================================
 
-const CACHE_NAME = 'sedekah-digital-v1';
+const CACHE_NAME = 'sedekah-digital-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
